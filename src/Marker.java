@@ -54,7 +54,45 @@ public class Marker {
      * Example: a = "ACGTAC", b = "TTACGT", k = 4: the words of a are ACGT, CGTA, GTAC; only ACGT is in b, so the answer is 1.
      */
     public static int sharedWords(String a, String b, int k) {
-        // TODO Mission 4
-        return -1;
+        if (k <= 0 || k > a.length() || k > b.length()) return 0;
+        long power = 1;
+        for (int i = 1; i < k; i++) power = power * BASE % MOD;
+
+        Map<Long, List<Integer>> positions = new HashMap<>();
+        long hash = firstHash(b, k);
+        for (int i = 0; i <= b.length() - k; i++) {
+            positions.computeIfAbsent(hash, key -> new ArrayList<>()).add(i);
+            if (i < b.length() - k) hash = slide(hash, power, b.charAt(i), b.charAt(i + k));
+        }
+
+        int count = 0;
+        hash = firstHash(a, k);
+        for (int i = 0; i <= a.length() - k; i++) {
+            List<Integer> matches = positions.get(hash);
+            if (matches != null) {
+                for (int start : matches) {
+                    if (a.regionMatches(i, b, start, k)) {
+                        count++;
+                        break;
+                    }
+                }
+            }
+            if (i < a.length() - k) hash = slide(hash, power, a.charAt(i), a.charAt(i + k));
+        }
+        return count;
+    }
+
+    private static final long BASE = 257;
+    private static final long MOD = 1_000_000_007;
+
+    private static long firstHash(String text, int k) {
+        long hash = 0;
+        for (int i = 0; i < k; i++) hash = (hash * BASE + text.charAt(i)) % MOD;
+        return hash;
+    }
+
+    private static long slide(long hash, long power, char oldLetter, char newLetter) {
+        long rest = (hash - oldLetter * power % MOD + MOD) % MOD;
+        return (rest * BASE + newLetter) % MOD;
     }
 }
