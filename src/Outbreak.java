@@ -17,8 +17,13 @@ public class Outbreak {
      * Main calls this twice: with all costs equal to 1 (the line "Tests needed") and with the real costs ("Cheapest testing").
      */
     public static boolean[] cheapestTests(int n, int[][] nb, int[] cost) {
-        // TODO Mission 5a
-        return new boolean[n];
+        boolean[] tested = new boolean[n];
+        if (n == 0) return tested;
+        long[] take = new long[n];
+        long[] skip = new long[n];
+        fillCosts(0, -1, nb, cost, take, skip);
+        choose(0, -1, false, nb, take, skip, tested);
+        return tested;
     }
 
     /**
@@ -27,7 +32,44 @@ public class Outbreak {
      * Example: a line 0-1-2-3 has chain 3; a star with centre 0 and leaves 1, 2, 3 has chain 2.
      */
     public static int longestChain(int n, int[][] nb) {
-        // TODO Mission 5b
-        return -1;
+        if (n == 0) return 0;
+        int[] best = {0};
+        height(0, -1, nb, best);
+        return best[0];
+    }
+
+    private static void fillCosts(int v, int parent, int[][] nb, int[] cost, long[] take, long[] skip) {
+        take[v] = cost[v];
+        for (int child : nb[v]) {
+            if (child == parent) continue;
+            fillCosts(child, v, nb, cost, take, skip);
+            take[v] += Math.min(take[child], skip[child]);
+            skip[v] += take[child];
+        }
+    }
+
+    private static void choose(int v, int parent, boolean required, int[][] nb,
+                               long[] take, long[] skip, boolean[] tested) {
+        tested[v] = required || take[v] < skip[v];
+        for (int child : nb[v]) {
+            if (child != parent) choose(child, v, !tested[v], nb, take, skip, tested);
+        }
+    }
+
+    private static int height(int v, int parent, int[][] nb, int[] best) {
+        int first = 0;
+        int second = 0;
+        for (int child : nb[v]) {
+            if (child == parent) continue;
+            int depth = 1 + height(child, v, nb, best);
+            if (depth > first) {
+                second = first;
+                first = depth;
+            } else if (depth > second) {
+                second = depth;
+            }
+        }
+        best[0] = Math.max(best[0], first + second);
+        return first;
     }
 }
